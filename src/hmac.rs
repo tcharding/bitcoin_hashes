@@ -23,18 +23,16 @@ use core::{borrow, fmt, ops, str};
 #[cfg(feature="serde")]
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
 
-use HashEngine as EngineTrait;
-use Hash as HashTrait;
-use Error;
+use crate::{Error, Hash, HashEngine};
 
 /// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "schemars", schemars(transparent))]
 #[repr(transparent)]
-pub struct Hmac<T: HashTrait>(T);
+pub struct Hmac<T: Hash>(T);
 
-impl<T: HashTrait + str::FromStr> str::FromStr for Hmac<T> {
+impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Hmac(str::FromStr::from_str(s)?))
@@ -43,27 +41,27 @@ impl<T: HashTrait + str::FromStr> str::FromStr for Hmac<T> {
 
 /// Pair of underlying hash midstates which represent the current state
 /// of an `HmacEngine`
-pub struct HmacMidState<T: HashTrait> {
+pub struct HmacMidState<T: Hash> {
     /// Midstate of the inner hash engine
-    pub inner: <T::Engine as EngineTrait>::MidState,
+    pub inner: <T::Engine as HashEngine>::MidState,
     /// Midstate of the outer hash engine
-    pub outer: <T::Engine as EngineTrait>::MidState,
+    pub outer: <T::Engine as HashEngine>::MidState,
 }
 
 /// Pair of underyling hash engines, used for the inner and outer hash of HMAC
 #[derive(Clone)]
-pub struct HmacEngine<T: HashTrait> {
+pub struct HmacEngine<T: Hash> {
     iengine: T::Engine,
     oengine: T::Engine,
 }
 
-impl<T: HashTrait> Default for HmacEngine<T> {
+impl<T: Hash> Default for HmacEngine<T> {
     fn default() -> Self {
         HmacEngine::new(&[])
     }
 }
 
-impl<T: HashTrait> HmacEngine<T> {
+impl<T: Hash> HmacEngine<T> {
     /// Construct a new keyed HMAC with the given key. We only support underlying hashes
     /// whose block sizes are ≤ 128 bytes; larger hashes will result in panics.
     pub fn new(key: &[u8]) -> HmacEngine<T> {
@@ -72,12 +70,12 @@ impl<T: HashTrait> HmacEngine<T> {
         let mut ipad = [0x36u8; 128];
         let mut opad = [0x5cu8; 128];
         let mut ret = HmacEngine {
-            iengine: <T as HashTrait>::engine(),
-            oengine: <T as HashTrait>::engine(),
+            iengine: <T as Hash>::engine(),
+            oengine: <T as Hash>::engine(),
         };
 
         if key.len() > T::Engine::BLOCK_SIZE {
-            let hash = <T as HashTrait>::hash(key);
+            let hash = <T as Hash>::hash(key);
             for (b_i, b_h) in ipad.iter_mut().zip(&hash[..]) {
                 *b_i ^= *b_h;
             }
@@ -93,8 +91,8 @@ impl<T: HashTrait> HmacEngine<T> {
             }
         };
 
-        EngineTrait::input(&mut ret.iengine, &ipad[..T::Engine::BLOCK_SIZE]);
-        EngineTrait::input(&mut ret.oengine, &opad[..T::Engine::BLOCK_SIZE]);
+        HashEngine::input(&mut ret.iengine, &ipad[..T::Engine::BLOCK_SIZE]);
+        HashEngine::input(&mut ret.oengine, &opad[..T::Engine::BLOCK_SIZE]);
         ret
     }
 
@@ -108,7 +106,7 @@ impl<T: HashTrait> HmacEngine<T> {
     }
 }
 
-impl<T: HashTrait> EngineTrait for HmacEngine<T> {
+impl<T: Hash> HashEngine for HmacEngine<T> {
     type MidState = HmacMidState<T>;
 
     fn midstate(&self) -> Self::MidState {
@@ -129,66 +127,66 @@ impl<T: HashTrait> EngineTrait for HmacEngine<T> {
     }
 }
 
-impl<T: HashTrait> fmt::Debug for Hmac<T> {
+impl<T: Hash> fmt::Debug for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self.0, f)
     }
 }
 
-impl<T: HashTrait> fmt::Display for Hmac<T> {
+impl<T: Hash> fmt::Display for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }
 }
 
-impl<T: HashTrait> fmt::LowerHex for Hmac<T> {
+impl<T: Hash> fmt::LowerHex for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.0, f)
     }
 }
 
-impl<T: HashTrait> ops::Index<usize> for Hmac<T> {
+impl<T: Hash> ops::Index<usize> for Hmac<T> {
     type Output = u8;
     fn index(&self, index: usize) -> &u8 {
         &self.0[index]
     }
 }
 
-impl<T: HashTrait> ops::Index<ops::Range<usize>> for Hmac<T> {
+impl<T: Hash> ops::Index<ops::Range<usize>> for Hmac<T> {
     type Output = [u8];
     fn index(&self, index: ops::Range<usize>) -> &[u8] {
         &self.0[index]
     }
 }
 
-impl<T: HashTrait> ops::Index<ops::RangeFrom<usize>> for Hmac<T> {
+impl<T: Hash> ops::Index<ops::RangeFrom<usize>> for Hmac<T> {
     type Output = [u8];
     fn index(&self, index: ops::RangeFrom<usize>) -> &[u8] {
         &self.0[index]
     }
 }
 
-impl<T: HashTrait> ops::Index<ops::RangeTo<usize>> for Hmac<T> {
+impl<T: Hash> ops::Index<ops::RangeTo<usize>> for Hmac<T> {
     type Output = [u8];
     fn index(&self, index: ops::RangeTo<usize>) -> &[u8] {
         &self.0[index]
     }
 }
 
-impl<T: HashTrait> ops::Index<ops::RangeFull> for Hmac<T> {
+impl<T: Hash> ops::Index<ops::RangeFull> for Hmac<T> {
     type Output = [u8];
     fn index(&self, index: ops::RangeFull) -> &[u8] {
         &self.0[index]
     }
 }
 
-impl<T: HashTrait> borrow::Borrow<[u8]> for Hmac<T> {
+impl<T: Hash> borrow::Borrow<[u8]> for Hmac<T> {
     fn borrow(&self) -> &[u8] {
         &self[..]
     }
 }
 
-impl<T: HashTrait> HashTrait for Hmac<T> {
+impl<T: Hash> Hash for Hmac<T> {
     type Engine = HmacEngine<T>;
     type Inner = T::Inner;
 
@@ -219,14 +217,14 @@ impl<T: HashTrait> HashTrait for Hmac<T> {
 }
 
 #[cfg(feature="serde")]
-impl<T: HashTrait + Serialize> Serialize for Hmac<T> {
+impl<T: Hash + Serialize> Serialize for Hmac<T> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         Serialize::serialize(&self.0, s)
     }
 }
 
 #[cfg(feature="serde")]
-impl<'de, T: HashTrait + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
+impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Hmac<T>, D::Error> {
         let inner = Deserialize::deserialize(d)?;
         Ok(Hmac(inner))
@@ -235,9 +233,8 @@ impl<'de, T: HashTrait + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
 
 #[cfg(test)]
 mod tests {
-    use sha256;
-    #[cfg(feature="serde")] use sha512;
-    use {Hash, HashEngine, Hmac, HmacEngine};
+    use crate::{Hash, HashEngine, Hmac, HmacEngine, sha256};
+    #[cfg(feature="serde")] use crate::sha512;
 
     #[derive(Clone)]
     struct Test {
@@ -393,8 +390,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use sha256;
-    use {Hmac, Hash, HashEngine};
+    use crate::{Hmac, Hash, HashEngine, sha256};
 
     #[bench]
     pub fn hmac_sha256_10(bh: & mut Bencher) {

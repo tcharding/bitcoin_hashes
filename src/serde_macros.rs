@@ -17,7 +17,7 @@
 #[cfg(feature = "serde")]
 /// Functions used by serde impls of all hashes
 pub mod serde_details {
-    use Error;
+    use crate::Error;
 
     use core::marker::PhantomData;
     use core::{fmt, ops, str};
@@ -127,6 +127,8 @@ macro_rules! serde_impl(
         impl $crate::serde_macros::serde_details::SerdeHash for $t {
             const N : usize = $len;
             fn from_slice_delegated(sl: &[u8]) -> Result<Self, $crate::Error> {
+                #[allow(unused_imports)]
+                use $crate::Hash as _;
                 $t::from_slice(sl)
             }
         }

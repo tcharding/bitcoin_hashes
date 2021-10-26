@@ -21,10 +21,7 @@
 
 use core::{cmp, mem, ptr, str};
 
-use Error;
-use Hash as HashTrait;
-use HashEngine as EngineTrait;
-use util;
+use crate::{Error, Hash as _, HashEngine as _, hex, util};
 
 macro_rules! compress {
     ($state:expr) => {{
@@ -139,7 +136,7 @@ impl Default for HashEngine {
     }
 }
 
-impl EngineTrait for HashEngine {
+impl crate::HashEngine for HashEngine {
     type MidState = State;
 
     fn midstate(&self) -> State {
@@ -211,9 +208,9 @@ serde_impl!(Hash, 8);
 borrow_slice_impl!(Hash);
 
 impl str::FromStr for Hash {
-    type Err = ::hex::Error;
+    type Err = hex::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        ::hex::FromHex::from_hex(s)
+        hex::FromHex::from_hex(s)
     }
 }
 
@@ -260,7 +257,7 @@ impl Hash {
     }
 }
 
-impl HashTrait for Hash {
+impl crate::Hash for Hash {
     type Engine = HashEngine;
     type Inner = [u8; 8];
 
@@ -327,7 +324,6 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use Hash as HashTrait;
 
     #[test]
     fn test_siphash_2_4() {
@@ -420,9 +416,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use siphash24;
-    use Hash;
-    use HashEngine;
+    use crate::{Hash, HashEngine, siphash24};
 
     #[bench]
     pub fn siphash24_1ki(bh: &mut Bencher) {
