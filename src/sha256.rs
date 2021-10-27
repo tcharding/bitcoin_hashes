@@ -246,7 +246,7 @@ impl HashEngine {
         HashEngine {
             buffer: [0; BLOCK_SIZE],
             h: ret,
-            length: length,
+            length,
         }
     }
 

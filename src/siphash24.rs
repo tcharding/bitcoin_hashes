@@ -91,8 +91,8 @@ impl HashEngine {
     /// Create a new SipHash24 engine with keys.
     pub fn with_keys(k0: u64, k1: u64) -> HashEngine {
         HashEngine {
-            k0: k0,
-            k1: k1,
+            k0,
+            k1,
             length: 0,
             state: State {
                 v0: k0 ^ 0x736f6d6570736575,

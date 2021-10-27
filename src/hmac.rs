@@ -100,8 +100,8 @@ impl<T: Hash> HmacEngine<T> {
     /// "inner" and "outer" engines.
     pub fn from_inner_engines(iengine: T::Engine, oengine: T::Engine) -> HmacEngine<T> {
         HmacEngine {
-            iengine: iengine,
-            oengine: oengine,
+            iengine,
+            oengine,
         }
     }
 }
