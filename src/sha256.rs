@@ -230,6 +230,7 @@ macro_rules! round(
     )
 );
 
+#[allow(clippy::many_single_char_names)]
 impl HashEngine {
     /// Create a new [HashEngine] from a midstate.
     ///

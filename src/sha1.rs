@@ -137,6 +137,7 @@ impl crate::Hash for Hash {
     }
 }
 
+#[allow(clippy::many_single_char_names)]
 impl HashEngine {
     // Basic unoptimized algorithm from Wikipedia
     fn process_block(&mut self) {

@@ -217,6 +217,7 @@ macro_rules! round(
     )
 );
 
+#[allow(clippy::many_single_char_names)]
 impl HashEngine {
     // Algorithm copied from libsecp256k1
     fn process_block(&mut self) {
