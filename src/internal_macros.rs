@@ -5,13 +5,11 @@
 /// Implpements various conversion traits as well as the [`crate::Hash`] trait.
 /// Arguments:
 ///
-/// * `$bits` - number of bits this hash type has
-/// * `$reversed` - `bool`  - `true` if the hash type should be displayed backwards, `false`
-///    otherwise.
 /// * `$gen: $gent` - generic type(s) and trait bound(s)
 ///
 /// Restrictions on usage:
 ///
+/// * Must define consts `DISPLAY_BACKWARDS` (`bool`) and `NBITS` (`usize`)
 /// * There must be a free-standing `fn from_engine(HashEngine) -> Hash` in the scope
 /// * `fn internal_new([u8; $bits / 8]) -> Self` must exist on `Hash`
 /// * `fn internal_engine() -> HashEngine` must exist on `Hash`
@@ -20,7 +18,11 @@
 /// `internal_new` is required so that types with more than one field are constructible.
 /// `internal_engine` is required to initialize the engine for given hash type.
 macro_rules! hash_trait_impls {
-    ($bits:expr, $reversed:expr $(, $gen:ident: $gent:ident)*) => {
+    ($($gen:ident: $gent:ident),*) => {
+        use core::ops::Index;
+        use core::slice::SliceIndex;
+        use core::str;
+
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -29,7 +31,7 @@ macro_rules! hash_trait_impls {
         }
 
         hex_fmt_impl!(Hash $(, $gen: $gent)*);
-        serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
+        serde_impl!(Hash, NBITS / 8 $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
         impl<I: SliceIndex<[u8]> $(, $gen: $gent)*> Index<I> for Hash<$($gen),*> {
@@ -43,10 +45,10 @@ macro_rules! hash_trait_impls {
 
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
             type Engine = HashEngine;
-            type Inner = [u8; $bits / 8];
+            type Inner = [u8; NBITS / 8];
 
-            const LEN: usize = $bits / 8;
-            const DISPLAY_BACKWARD: bool = $reversed;
+            const LEN: usize = NBITS / 8;
+            const DISPLAY_BACKWARD: bool = DISPLAY_BACKWARDS;
 
             fn engine() -> Self::Engine {
                 Self::internal_engine()
@@ -57,10 +59,10 @@ macro_rules! hash_trait_impls {
             }
 
             fn from_slice(sl: &[u8]) -> Result<Hash<$($gen),*>, Error> {
-                if sl.len() != $bits / 8 {
+                if sl.len() != NBITS / 8 {
                     Err(Error::InvalidLength(Self::LEN, sl.len()))
                 } else {
-                    let mut ret = [0; $bits / 8];
+                    let mut ret = [0; NBITS / 8];
                     ret.copy_from_slice(sl);
                     Ok(Self::internal_new(ret))
                 }
@@ -79,7 +81,7 @@ macro_rules! hash_trait_impls {
             }
 
             fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
+                Hash::internal_new([0x00; NBITS / 8])
             }
         }
     }
@@ -93,26 +95,24 @@ pub(crate) use hash_trait_impls;
 ///
 /// Arguments: 
 ///
-/// * `$bits` - the number of bits of the hash type
-/// * `$reversed` - `true` if the hash should be displayed backwards, `false` otherwise
 /// * `$doc` - doc string to put on the type
 /// * `$schemars` - a literal that goes into `schema_with`.
 ///
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
-    ($bits:expr, $reversed:expr, $doc:literal, $schemars:literal) => {
+    ($doc:literal, $schemars:literal) => {
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[cfg_attr(feature = "schemars", derive(crate::schemars::JsonSchema))]
         #[repr(transparent)]
         pub struct Hash(
             #[cfg_attr(feature = "schemars", schemars(schema_with = $schemars))]
-            [u8; $bits / 8]
+            [u8; NBITS / 8]
         );
 
         impl Hash {
-            fn internal_new(arr: [u8; $bits / 8]) -> Self {
+            fn internal_new(arr: [u8; NBITS / 8]) -> Self {
                 Hash(arr)
             }
 
@@ -121,7 +121,7 @@ macro_rules! hash_type {
             }
         }
 
-        crate::internal_macros::hash_trait_impls!($bits, $reversed);
+        crate::internal_macros::hash_trait_impls!();
     }
 }
 pub(crate) use hash_type;

@@ -15,15 +15,14 @@
 //! SHA256 implementation.
 //!
 
-use core::{cmp, str};
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::cmp;
 
 use crate::{Error, HashEngine as _, hex, util};
 
+const DISPLAY_BACKWARDS: bool = false;
+const NBITS: usize = 256;
+
 crate::internal_macros::hash_type! {
-    256,
-    false,
     "Output of the SHA256 hash function.",
     "crate::util::json_hex_string::len_32"
 }

@@ -15,15 +15,12 @@
 //! SHA256d implementation (double SHA256).
 //!
 
-use core::str;
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{Error, hex, sha256};
 
+const DISPLAY_BACKWARDS: bool = true;
+const NBITS: usize = 256;
+
 crate::internal_macros::hash_type! {
-    256,
-    true,
     "Output of the SHA256d hash function.",
     "crate::util::json_hex_string::len_32"
 }

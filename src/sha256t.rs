@@ -15,12 +15,13 @@
 //! SHA256t implementation (tagged SHA256).
 //!
 
-use core::{cmp, str};
+use core::cmp;
 use core::marker::PhantomData;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{Error, hex, sha256};
+
+const DISPLAY_BACKWARDS: bool = true;
+const NBITS: usize = 256;
 
 type HashEngine = sha256::HashEngine;
 
@@ -83,7 +84,7 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     }
 }
 
-crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
+crate::internal_macros::hash_trait_impls!(T: Tag);
 
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
     use crate::Hash as _;

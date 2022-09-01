@@ -20,13 +20,14 @@
 //! SHA512 implementation.
 //!
 
-use core::{cmp, hash, str};
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::{cmp, hash};
 
 use crate::{Error, HashEngine as _, hex, util};
 
-crate::internal_macros::hash_trait_impls!(512, false);
+const DISPLAY_BACKWARDS: bool = false;
+const NBITS: usize = 512;
+
+crate::internal_macros::hash_trait_impls!();
 
 const BLOCK_SIZE: usize = 128;
 

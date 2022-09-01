@@ -20,15 +20,14 @@
 //! SipHash 2-4 implementation.
 //!
 
-use core::{cmp, mem, ptr, str};
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::{cmp, mem, ptr};
 
 use crate::{Error, Hash as _, HashEngine as _, hex, util};
 
+const DISPLAY_BACKWARDS: bool = false;
+const NBITS: usize = 64;
+
 crate::internal_macros::hash_type! {
-    64,
-    false,
     "Output of the SipHash24 hash function.",
     "util::json_hex_string::len_8"
 }

@@ -20,15 +20,12 @@
 //! HASH160 (SHA256 then RIPEMD160) implementation.
 //!
 
-use core::str;
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{Error, hex, ripemd160, sha256};
 
+const DISPLAY_BACKWARDS: bool = false;
+const NBITS: usize = 160;
+
 crate::internal_macros::hash_type! {
-    160,
-    false,
     "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))",
     "crate::util::json_hex_string::len_20"
 }
